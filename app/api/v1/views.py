@@ -30,7 +30,7 @@ class Intervention(Resource):
     def get(self, intervention_id):
         intervention = db.get_intervention(intervention_id)
         return {"status": 200, "data": intervention}, 200
-    
+
     def delete(self, intervention_id):
         db.delete_record(intervention_id)
         return {"status": 200, "data": {"id": intervention_id, 
@@ -51,7 +51,7 @@ class Signup(Resource):
             access_token = create_access_token(identity=password)
             post_data = (data['firstname'], data['lastname'], 
                          data['othername'], email, data['phoneNumber'], 
-                         username, password)
+                         username, password, data['isAdmin'])
             db.insert_user(post_data)
             return{"status": 201, "data": 
                    [{"token": access_token, "user": data}]}, 201
@@ -99,6 +99,49 @@ class Updatecomment(Resource):
         db.update_intervention_comment(patch_data)
         return{"status": 200, "data":
                [{"id": intervention_id, "message": 
-                 "Updated intervention record's comment"}]}, 200
+                 "Updated intervention record comment"}]}, 200
 
+
+class Interventionstatus(Resource):
+    def patch(self, intervention_id):
+        data = request.get_json(silent=True)
+        admin = data["isAdmin"]
+        if admin == 'False':
+            return {"message": "You do not have permission " 
+                    "to access this route."}, 403
+        incident_type = data['type']
+        if incident_type != 'Intervention':
+            return {"message": "Invalid incident type. "
+                    "Please select an incident of type 'Intervention'"}, 400
+        status = data["status"]
+        if status is None or status is "":
+            return {"message": "Missing update information"
+                    "check your input and try again"}, 400
+        patch_data = (status, intervention_id)
+        db.update_intervention_status(patch_data)
+        return{"status": 200, "data":
+               [{"id": intervention_id, "message": 
+                 "Updated intervention record status"}]}, 200
+
+
+class Redflagstatus(Resource):
+    def patch(self, red_flag_id):
+        data = request.get_json(silent=True)
+        admin = data["isAdmin"]
+        if admin == 'False':
+            return {"message": "You do not have permission " 
+                    "to access this route."}, 403
+        incident_type = data['type']
+        if incident_type != 'Redflag':
+            return {"message": "Invalid incident type. "
+                    "Please select an incident of type 'Redflag'"}, 400
+        status = data["status"]
+        if status is None or status is "":
+            return {"message": "Missing update information"
+                    "check your input and try again"}, 400
+        patch_data = (status, red_flag_id)
+        db.update_redflag_status(patch_data)
+        return{"status": 200, "data":
+               [{"id": red_flag_id, "message": 
+                 "Updated redflag record status"}]}, 200
  
