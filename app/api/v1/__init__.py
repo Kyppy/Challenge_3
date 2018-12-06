@@ -9,6 +9,7 @@ from .views import Updatelocation
 from .views import Updatecomment
 from .views import Interventionstatus
 from .views import Redflagstatus
+from .views import Protected
 
 
 version_one = Blueprint('api_v1', __name__, url_prefix='/api/v1')
@@ -24,3 +25,4 @@ api.add_resource(Updatecomment, '/interventions/<int:intervention_id>/comment')
 api.add_resource(Interventionstatus,
                  '/interventions/<int:intervention_id>/status')
 api.add_resource(Redflagstatus, '/red_flags/<int:red_flag_id>/status')
+api.add_resource(Protected, '/protected')
