@@ -126,4 +126,5 @@ class Database():
             comment VARCHAR(500) NOT NULL )"""
         tables_query = [users, incidents]
         return tables_query
+        
                 
