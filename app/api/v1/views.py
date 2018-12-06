@@ -15,10 +15,8 @@ class Interventions(Resource):
 
     def post(self):
         data = request.get_json(silent=True)
-        """
-        if data['type'] or data['comment'] is None or "":
-            return{"message": "Invalid incident type or comment"}, 400
-        """
+        if data['comment'] is None or data['comment'] is "":
+            return{"message": "Empty comment input"}, 400
         post_data = (data['id'], data['type'], data['location'], 
                      data['Images'], data['Videos'], data['comment'])
         db.insert_intervention(post_data)
