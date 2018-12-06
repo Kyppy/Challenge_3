@@ -73,4 +73,32 @@ class Login(Resource):
                    [{"token": access_token, "user": data}]}, 200
         return {"message": "Bad credentials.Login failed"}, 400
 
+
+class Updatelocation(Resource):
+    def patch(self, intervention_id):
+        data = request.get_json(silent=True)
+        location = data["location"]
+        if location is None or location is "":
+            return {"message": "Missing update information"
+                    "check your input and try again"}, 400
+        patch_data = (location, intervention_id)
+        db.update_intervention_location(patch_data)
+        return{"status": 200, "data":
+               [{"id": intervention_id, "message": 
+                 "Updated intervention record's location"}]}, 200
+
+
+class Updatecomment(Resource):
+    def patch(self, intervention_id):
+        data = request.get_json(silent=True)
+        comment = data["comment"]
+        if comment is None or comment is "":
+            return {"message": "Missing update information"
+                    "check your input and try again"}, 400
+        patch_data = (comment, intervention_id)
+        db.update_intervention_comment(patch_data)
+        return{"status": 200, "data":
+               [{"id": intervention_id, "message": 
+                 "Updated intervention record's comment"}]}, 200
+
  

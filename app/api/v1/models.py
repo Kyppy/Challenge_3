@@ -97,12 +97,14 @@ class Database():
         Prevent duplicate entries of unique fields."""
         con = self.connect()
         cursor = con.cursor()
-        cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
+        cursor.execute("SELECT username FROM users\
+                         WHERE username = %s", (username,))
         user = cursor.fetchone()
         if user is not None:
             return{"message": "This username is already in use."
                    "Please choose another."}, 400
-        cursor.execute("SELECT password FROM users WHERE password = %s", (password,))
+        cursor.execute("SELECT password FROM users\
+                         WHERE password = %s", (password,))
         pass_word = cursor.fetchone()
         if pass_word is not None:
             return{"message": "This password is already in use."

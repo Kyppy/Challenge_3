@@ -5,11 +5,16 @@ from .views import Interventions
 from .views import Intervention
 from .views import Signup
 from .views import Login
+from .views import Updatelocation
+from .views import Updatecomment
+
 
 version_one = Blueprint('api_v1', __name__, url_prefix='/api/v1')
 api = Api(version_one)
 
 api.add_resource(Interventions, '/interventions')
-api.add_resource(Intervention, '/intervention/<intervention_id>')
+api.add_resource(Intervention, '/intervention/<int:intervention_id>')
 api.add_resource(Signup, '/auth/signup')
 api.add_resource(Login, '/auth/login')
+api.add_resource(Updatelocation, '/interventions/<int:intervention_id>/location')
+api.add_resource(Updatecomment, '/interventions/<int:intervention_id>/comment')
