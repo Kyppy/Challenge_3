@@ -23,3 +23,5 @@ class Interventions(Resource):
         db.insert_intervention(post_data)
         return{"status": 200, "data": [{"id": data['id'], 
                "message":"Created intervention record"}]}, 201
+
+
