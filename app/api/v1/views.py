@@ -1,6 +1,7 @@
 import psycopg2
-from flask import request
+from flask import Flask, request
 from flask_restful import Resource
+from flask_jwt_extended import(JWTManager, jwt_required, create_access_token)
 from .models import Database
 
 db = Database()
@@ -35,3 +36,24 @@ class Intervention(Resource):
         return {"status": 200, "data": {"id": intervention_id, 
                 "message": "Intervention record has been deleted"}}, 200
 
+
+class Signup(Resource):
+    def post(self):
+        data = request.get_json(silent=True)
+        username = data["username"]
+        password = data["password"]
+        email = data["email"]
+        if username is None or password is None or email is None:
+            return {"message": "Missing signup parameters.Please check your" 
+                    "username,password or email and try again"}, 400
+        valid = db.authorise_signup(username, password, email)
+        if valid:
+            access_token = create_access_token(identity=password)
+            post_data = (data['firstname'], data['lastname'], 
+                         data['othername'], email, data['phoneNumber'], 
+                         username, password)
+            db.insert_user(post_data)
+            return{"status": 201, "data": 
+                   [{"token": access_token, "user": data}]}, 201
+        return {"message": "Bad credentials.Signup failed"}, 400
+    
