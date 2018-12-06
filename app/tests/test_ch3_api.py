@@ -1,73 +1,79 @@
 import unittest
 from flask import json
 from app import create_app
+from ..api import v1
 
 app = create_app()
+database = v1.models.Database()
+
 
 class TestUsers(unittest.TestCase):
 
     def setUp(self):
+        database.drop_tables()
+        database.create_tables()
         app.testing = True
         self.app = app.test_client()
-    
+        self.user1 = {
+            "firstname": "John",
+            "lastname": "Doe",
+            "othername": "Jhonny",
+            "email": "Doe@demo.com",
+            "phoneNumber": "07071010",
+            "username": "abc",
+            "password": "123",
+            "isAdmin": "False"
+        }
+        self.incident1 = {
+            "id": 100,
+            "type": "Redflag",
+            "location": "100N,50S",
+            "Images": "[Images]",
+            "Videos": "[Videos]",
+            "comment": "Corruption"
+        }
+        
     def test_user_signup(self):
-        response = self.app.post('/api/v1/auth/signup')
+        response = self.app.post('/api/v1/auth/signup', 
+                                 data=json.dumps(self.user1), 
+                                 content_type='application/json')
         result = json.loads(response.data)
-        self.assertEqual(result['status'],200)
-
+        self.assertEqual(result['status'], 201)
+    
     def test_user_login(self):
-        response = self.app.post('/api/v1/auth/login')
+        self.app.post('/api/v1/auth/signup', 
+                      data=json.dumps(self.user1), 
+                      content_type='application/json')
+        response = self.app.post('/api/v1/auth/login', 
+                                 data=json.dumps(self.user1), 
+                                 content_type='application/json')
         result = json.loads(response.data)
-        self.assertEqual(result['status'],200)
+        self.assertEqual(result['status'], 200)
     
     def test_get_interventions(self):
+        self.app.post('/api/v1/interventions', 
+                      data=json.dumps(self.incident1), 
+                      content_type='application/json')
         response = self.app.get('/api/v1/interventions')
         result = json.loads(response.data)
-        self.assertEqual(result['status'],200)
-        self.assertEqual(result['data'],intervention_data)
+        self.assertEqual(result['status'], 200)
     
     def test_get_specific_intervention(self):
-        response = self.app.get('/api/v1/interventions/<intervention_id>')
+        self.app.post('/api/v1/interventions', 
+                      data=json.dumps(self.incident1), 
+                      content_type='application/json')
+        response = self.app.get('/api/v1/intervention/100')
         result = json.loads(response.data)
-        self.assertEqual(result['status'],200)
-        self.assertEqual(result['data'],intervention_data)
-    
-    def test_admin_edit_redflag_status(self):
-        response = self.app.patch('/api/v1/red_flags/800/status', data=json.dumps(self.data), content_type='application/json')
-        self.assertEqual(response.status_code,200)
-        self.assertEqual(red_flag['status'],data['status'])
-
-    def test_admin_edit_intervention_status(self):
-        response = self.app.patch('/api/v1/interventions/800/status', data=json.dumps(self.data), content_type='application/json')
-        self.assertEqual(response.status_code,200)
-        self.assertEqual(intervention['status'],data['status'])
-    
-    def test_admin_edit_intervention_comment(self):
-        response = self.app.patch('/api/v1/interventions/800/comment', data=json.dumps(self.data), content_type='application/json')
-        self.assertEqual(response.status_code,200)
-        self.assertEqual(intervention['comment'],data['comment'])
-    
-    def test_admin_edit_intervention_location(self):
-        response = self.app.patch('/api/v1/interventions/800/location', data=json.dumps(self.data), content_type='application/json')
-        self.assertEqual(response.status_code,200)
-        self.assertEqual(intervention['location'],data['location'])
+        self.assertEqual(result['status'], 200)
+        self.assertEqual(result['data'][0], 100)
     
     def test_delete_record(self):
-        self.app.post('/api/v1/intervention/800', data=json.dumps(self.data), content_type='application/json')
-        response = self.app.delete('/api/v1/red_flag/800')
+        self.app.post('/api/v1/interventions', 
+                      data=json.dumps(self.incident1), 
+                      content_type='application/json')
+        response = self.app.delete('/api/v1/intervention/100')
         result = json.loads(response.data)
-        self.assertEqual(result['status'],200)
-        self.assertEqual(intervention,None)
+        self.assertEqual(result['status'], 200)
 
-    def test_post_incident_record(self):
-        response = self.app.post('/api/v1/interventions', data=json.dumps(self.data), content_type='application/json')
-        self.assertEqual(response.status_code,201)
-        self.assertEqual(new_intervention['data'],data['data'])
-        
-    
-"""
-Arbitrary change to test Coveralls.Change
-"""
-    
-      
+    database.drop_tables()
 

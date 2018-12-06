@@ -12,10 +12,6 @@ class Database():
         connect = psycopg2.connect(url)
         return connect
 
-    def connect_testbase(self):
-        connect = psycopg2.connect(url)
-        return connect
-
     def create_tables(self):
         """Create 'users' and 'incidents' tables
         in database if they do not already exist"""
@@ -28,21 +24,9 @@ class Database():
         con.commit()
         con.close()
     
-    def create_test_tables(self):
-        """Create 'users' and 'incidents' tables
-        in 'testing' database if they do not already exist"""
-        con = self.connect_testbase()
-        cursor = con.cursor()
-        queries = self.tables()
-        for query in queries:
-            cursor.execute(query)
-        cursor.close()
-        con.commit()
-        con.close()
-    
-    def drop_test_tables(self):
-        """Drop 'users' and 'incidents' tables from 'testing' database"""
-        con = self.connect_testbase()
+    def drop_tables(self):
+        """Drop 'users' and 'incidents' tables from database"""
+        con = self.connect()
         cursor = con.cursor()
         cursor.execute("""DROP TABLE IF EXISTS users,incidents CASCADE""")
         cursor.close()

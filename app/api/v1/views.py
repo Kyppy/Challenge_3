@@ -20,7 +20,7 @@ class Interventions(Resource):
         post_data = (data['id'], data['type'], data['location'], 
                      data['Images'], data['Videos'], data['comment'])
         db.insert_intervention(post_data)
-        return{"status": 200, "data": [{"id": data['id'], 
+        return{"status": 201, "data": [{"id": data['id'], 
                "message":"Created intervention record"}]}, 201
 
 
