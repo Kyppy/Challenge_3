@@ -127,6 +127,3 @@ class Database():
         tables_query = [users, incidents]
         return tables_query
 
-
-
-
