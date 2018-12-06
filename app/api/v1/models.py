@@ -109,11 +109,31 @@ class Database():
                    "Please choose another."}, 400
         cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
         mail = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
         if mail is not None:
             return{"message": "This email is already in use."
                    "Please choose another."}, 400
         return True
-        
+    
+    def authorise_login(self, username, password):
+        """Compare login data to existing users in database.
+        If data matches produce access token for user."""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT username,password \
+                        FROM users WHERE password = %s", (password,))
+        credentials = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+        if username != credentials[0]:
+            return {"message": "Invalid Username.Please try again"}, 400
+        if password != credentials[1]:
+            return {"message": "Invalid Password.Please try again"}, 400
+        return True
+          
     def delete_record(self, intervention_id):
         """Delete a specific intervention record"""
         con = self.connect()
