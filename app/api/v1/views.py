@@ -12,4 +12,16 @@ class Interventions(Resource):
         interventions = db.get_all_interventions()
         return {"status": 200, "data": interventions}, 200
 
-    
+    def post(self):
+        data = request.get_json(silent=True)
+        """
+        if data['type'] or data['comment'] is None or "":
+            return{"message": "Invalid incident type or comment"}, 400
+        """
+        post_data = (data['id'], data['type'], data['location'], 
+                     data['Images'], data['Videos'], data['comment'])
+        db.insert_intervention(post_data)
+        return{"status": 200, "data": [{"id": data['id'], 
+               "message":"Created intervention record"}]}, 201
+
+
