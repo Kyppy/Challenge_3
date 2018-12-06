@@ -25,3 +25,8 @@ class Interventions(Resource):
                "message":"Created intervention record"}]}, 201
 
 
+class Intervention(Resource):
+    def get(self, intervention_id):
+        intervention = db.get_intervention(intervention_id)
+        return {"status": 200, "data": intervention}, 200
+
