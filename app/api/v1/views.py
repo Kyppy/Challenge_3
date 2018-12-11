@@ -142,4 +142,10 @@ class Redflagstatus(Resource):
         return{"status": 200, "data":
                [{"id": red_flag_id, "message": 
                  "Updated redflag record status"}]}, 200
+
+
+class Protected(Resource):
+    @jwt_required
+    def get(self):
+        return {"message": "Valid token,access granted"}
  
