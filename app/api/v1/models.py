@@ -3,9 +3,16 @@ import psycopg2
 url = "dbname='ireporter' host='localhost'\
              port='5432' user='postgres' password='Nanbada13'"
 
+test_url = "dbname='testing' host='localhost'\
+             port='5432' user='postgres' password='Nanbada13'"
+
 
 class Database():
     def connect(self):
+        connect = psycopg2.connect(url)
+        return connect
+
+    def connect_testbase(self):
         connect = psycopg2.connect(url)
         return connect
 
@@ -17,6 +24,27 @@ class Database():
         queries = self.tables()
         for query in queries:
             cursor.execute(query)
+        cursor.close()
+        con.commit()
+        con.close()
+    
+    def create_test_tables(self):
+        """Create 'users' and 'incidents' tables
+        in 'testing' database if they do not already exist"""
+        con = self.connect_testbase()
+        cursor = con.cursor()
+        queries = self.tables()
+        for query in queries:
+            cursor.execute(query)
+        cursor.close()
+        con.commit()
+        con.close()
+    
+    def drop_test_tables(self):
+        """Drop 'users' and 'incidents' tables from 'testing' database"""
+        con = self.connect_testbase()
+        cursor = con.cursor()
+        cursor.execute("""DROP TABLE IF EXISTS users,incidents CASCADE""")
         cursor.close()
         con.commit()
         con.close()
