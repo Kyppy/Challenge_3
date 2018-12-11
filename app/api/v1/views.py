@@ -56,4 +56,21 @@ class Signup(Resource):
             return{"status": 201, "data": 
                    [{"token": access_token, "user": data}]}, 201
         return {"message": "Bad credentials.Signup failed"}, 400
-    
+
+
+class Login(Resource):
+    def post(self):
+        data = request.get_json(silent=True)
+        username = data["username"]
+        password = data["password"]
+        if username is None or password is None:
+            return {"message": "Missing login parameters.Please check your" 
+                    "username or password and try again"}, 400
+        valid = db.authorise_login(username, password)
+        if valid:
+            access_token = create_access_token(identity=password)
+            return{"status": 200, "data": 
+                   [{"token": access_token, "user": data}]}, 200
+        return {"message": "Bad credentials.Login failed"}, 400
+
+ 
