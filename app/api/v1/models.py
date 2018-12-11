@@ -38,8 +38,8 @@ class Database():
         con = self.connect()
         cursor = con.cursor()
         sql = """INSERT INTO users(firstname, lastname, othername, email,
-                 phoneNumber, username, password) VALUES(%s, %s, %s, %s,
-                 %s, %s, %s)"""
+                 phoneNumber, username, password, isAdmin) VALUES(%s, %s, %s, 
+                 %s, %s, %s, %s, %s)"""
         cursor.execute(sql, post_data)
         cursor.close()
         con.commit()
@@ -64,6 +64,30 @@ class Database():
         sql = """UPDATE incidents
                     SET comment = %s
                     WHERE id = %s"""
+        cursor.execute(sql, patch_data)
+        cursor.close()
+        con.commit()
+        con.close()
+    
+    def update_intervention_status(self, patch_data):
+        """Edit the 'status' field of an intervention record"""
+        con = self.connect()
+        cursor = con.cursor()
+        sql = """UPDATE incidents
+                    SET status = %s
+                    WHERE id = %s AND type = 'Intervention'"""
+        cursor.execute(sql, patch_data)
+        cursor.close()
+        con.commit()
+        con.close()
+    
+    def update_redflag_status(self, patch_data):
+        """Edit the 'status' field of an intervention record"""
+        con = self.connect()
+        cursor = con.cursor()
+        sql = """UPDATE incidents
+                    SET status = %s
+                    WHERE id = %s AND type = 'Redflag'"""
         cursor.execute(sql, patch_data)
         cursor.close()
         con.commit()
@@ -157,14 +181,14 @@ class Database():
             username VARCHAR(25) UNIQUE NOT NULL,
             password VARCHAR(50) UNIQUE NOT NULL,
             registered VARCHAR(25) DEFAULT 'Date-time placeholder',
-            isAdmin BOOLEAN DEFAULT 'false' NOT NULL )"""
+            isAdmin BOOLEAN DEFAULT 'False' NOT NULL )"""
         incidents = """CREATE TABLE IF NOT EXISTS incidents (
             id INTEGER UNIQUE PRIMARY KEY,
             createdOn VARCHAR(25) DEFAULT 'Date-time placeholder',
             createdBy INTEGER DEFAULT '10',
             type VARCHAR NOT NULL,
             location VARCHAR,
-            status VARCHAR DEFAULT 'Unresolved',
+            status VARCHAR DEFAULT 'Under investigation',
             Images VARCHAR,
             Videos VARCHAR,
             comment VARCHAR(500) NOT NULL )"""
