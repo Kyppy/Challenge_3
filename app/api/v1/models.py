@@ -194,7 +194,7 @@ class Database():
             registered VARCHAR(25) DEFAULT 'Date-time placeholder',
             isAdmin BOOLEAN DEFAULT 'False' NOT NULL )"""
         incidents = """CREATE TABLE IF NOT EXISTS incidents (
-            id INTEGER UNIQUE PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             createdOn VARCHAR(25) DEFAULT 'Date-time placeholder',
             createdBy INTEGER DEFAULT '10',
             type VARCHAR NOT NULL,
