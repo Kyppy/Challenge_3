@@ -12,7 +12,7 @@ services:
 
 before_script:
   - psql -c "CREATE DATABASE ireporter;" -U postgres
-  - psql -c "CREATE USER postgres WITH PASSWORD 'Nanbada13';" -U postgres
+  #- psql -c "CREATE USER postgres WITH PASSWORD 'Nanbada13';" -U postgres
 
 script:
 - nosetests --with-coverage --cover-package=app
