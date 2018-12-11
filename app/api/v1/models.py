@@ -122,7 +122,9 @@ class Database():
         cursor = con.cursor()
         sql = """SELECT * FROM incidents WHERE id = %s"""
         cursor.execute(sql, (intervention_id,))
-        record = cursor.fetchone()   
+        record = cursor.fetchone()
+        if record is None or record is "":
+            return False
         cursor.close()
         con.commit()
         con.close()
@@ -137,22 +139,19 @@ class Database():
                          WHERE username = %s", (username,))
         user = cursor.fetchone()
         if user is not None:
-            return{"message": "This username is already in use."
-                   "Please choose another."}, 400
+            return False
         cursor.execute("SELECT password FROM users\
                          WHERE password = %s", (password,))
         pass_word = cursor.fetchone()
         if pass_word is not None:
-            return{"message": "This password is already in use."
-                   "Please choose another."}, 400
+            return False
         cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
         mail = cursor.fetchone()
         cursor.close()
         con.commit()
         con.close()
         if mail is not None:
-            return{"message": "This email is already in use."
-                   "Please choose another."}, 400
+            return False
         return True
     
     def authorise_login(self, username, password):
@@ -195,7 +194,7 @@ class Database():
             registered VARCHAR(25) DEFAULT 'Date-time placeholder',
             isAdmin BOOLEAN DEFAULT 'False' NOT NULL )"""
         incidents = """CREATE TABLE IF NOT EXISTS incidents (
-            id INTEGER UNIQUE PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             createdOn VARCHAR(25) DEFAULT 'Date-time placeholder',
             createdBy INTEGER DEFAULT '10',
             type VARCHAR NOT NULL,
