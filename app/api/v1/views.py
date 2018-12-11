@@ -29,4 +29,9 @@ class Intervention(Resource):
     def get(self, intervention_id):
         intervention = db.get_intervention(intervention_id)
         return {"status": 200, "data": intervention}, 200
+    
+    def delete(self, intervention_id):
+        db.delete_record(intervention_id)
+        return {"status": 200, "data": {"id": intervention_id, 
+                "message": "Intervention record has been deleted"}}, 200
 
