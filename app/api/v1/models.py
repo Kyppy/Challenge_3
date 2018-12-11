@@ -91,7 +91,29 @@ class Database():
         con.commit()
         con.close()
         return record
-
+    
+    def authorise_signup(self, username, password, email):
+        """Compare signup data to existing user data.
+        Prevent duplicate entries of unique fields."""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT username FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        if user is not None:
+            return{"message": "This username is already in use."
+                   "Please choose another."}, 400
+        cursor.execute("SELECT password FROM users WHERE password = %s", (password,))
+        pass_word = cursor.fetchone()
+        if pass_word is not None:
+            return{"message": "This password is already in use."
+                   "Please choose another."}, 400
+        cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+        mail = cursor.fetchone()
+        if mail is not None:
+            return{"message": "This email is already in use."
+                   "Please choose another."}, 400
+        return True
+        
     def delete_record(self, intervention_id):
         """Delete a specific intervention record"""
         con = self.connect()
