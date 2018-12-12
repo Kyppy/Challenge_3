@@ -37,9 +37,9 @@ class Database():
         """Insert a new intervention row into the database"""
         con = self.connect()
         cursor = con.cursor()
-        sql = """INSERT INTO incidents(id,type,location,Images,Videos,comment)
-                 VALUES(%s, %s, %s, %s,
-                 %s, %s)"""
+        sql = """INSERT INTO incidents(type,location,Images,Videos,comment,createdOn)
+                 VALUES(%s, %s, %s,
+                 %s, %s, %s)"""
         cursor.execute(sql, post_data)
         cursor.close()
         con.commit()
@@ -109,13 +109,24 @@ class Database():
         """Fetch all intervention records"""
         con = self.connect()
         cursor = con.cursor()
-        cursor.execute("SELECT * FROM incidents")
+        cursor.execute("SELECT * FROM incidents WHERE type = 'Intervention'")
         get_list = (cursor.fetchall())
         cursor.close()
         con.commit()
         con.close()
         return get_list
 
+    def get_all_redflags(self):
+        """Fetch all redflag records"""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT * FROM incidents WHERE type = 'Redflag'")
+        get_list = (cursor.fetchall())
+        cursor.close()
+        con.commit()
+        con.close()
+        return get_list
+    
     def get_intervention(self, intervention_id):
         """Fetch a specific intervention record"""
         con = self.connect()
@@ -187,8 +198,8 @@ class Database():
             firstname VARCHAR(25) NOT NULL,
             lastname VARCHAR(25) NOT NULL,
             othername VARCHAR(25),
-            email VARCHAR(50) UNIQUE NOT NULL,
-            phoneNumber INTEGER,
+            email VARCHAR UNIQUE NOT NULL,
+            phoneNumber VARCHAR,
             username VARCHAR(25) UNIQUE NOT NULL,
             password VARCHAR(50) UNIQUE NOT NULL,
             registered VARCHAR(25) DEFAULT 'Date-time placeholder',

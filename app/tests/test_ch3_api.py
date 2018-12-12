@@ -19,11 +19,11 @@ class TestUsers(unittest.TestCase):
         self.user1 = {
             "firstname": "John",
             "lastname": "Doe",
-            "othername": "Jhonny",
+            "othername": "",
             "email": "Doe@demo.com",
-            "phoneNumber": "07071010",
-            "username": "abc",
-            "password": "123",
+            "phoneNumber": "079-364-0944",
+            "username": "B@t5!",
+            "password": "Hi_d?.",
             "isAdmin": "False"
         }
         """Bad credentials:Password and username missing"""
@@ -32,7 +32,7 @@ class TestUsers(unittest.TestCase):
             "lastname": "Doe",
             "othername": "Jhonny",
             "email": "Doe@demo.com",
-            "phoneNumber": "07071010",
+            "phoneNumber": "079-364-0944",
             "username": "",
             "password": "",
             "isAdmin": "False"
@@ -43,25 +43,37 @@ class TestUsers(unittest.TestCase):
             "lastname": "",
             "othername": "Jhonny",
             "email": "Doe@demo.com",
-            "phoneNumber": "07071010",
-            "username": "",
-            "password": "",
+            "phoneNumber": "079-364-0944",
+            "username": "abc",
+            "password": "123",
+            "isAdmin": "False"
+        }
+        """Bad credentials:Poor firstname formatting"""
+        self.user4 = {
+            "firstname": "J@hn!",
+            "lastname": "Doe",
+            "othername": "",
+            "email": "Doe@demo.com",
+            "phoneNumber": "079-364-0944",
+            "username": "B@t5!",
+            "password": "Hi_d?.",
+            "isAdmin": "False"
+        }
+        """Bad credentials:Poor email formatting"""
+        self.user5 = {
+            "firstname": "John",
+            "lastname": "Doe",
+            "othername": "",
+            "email": "Doedemo.com",
+            "phoneNumber": "079-364-0944",
+            "username": "B@t5!",
+            "password": "Hi_d?.",
             "isAdmin": "False"
         }
         """Incident records for testing incident-related resources"""
-        """Valid "redflag" record"""
+        """Valid 'Intervention' record"""
         self.incident1 = {
-            "id": 100,
             "type": "Intervention",
-            "location": "100N,50S",
-            "Images": "[Images]",
-            "Videos": "[Videos]",
-            "comment": "Corruption"
-        }
-        """Invalid 'redflag' record.Incident 'id' missing."""
-        self.incident2 = {
-            "id": "",
-            "type": "Redflag",
             "location": "100N,50S",
             "Images": "[Images]",
             "Videos": "[Videos]",
@@ -69,35 +81,58 @@ class TestUsers(unittest.TestCase):
         }
         """Invalid incident record.Incorrect incident 'type'."""
         self.incident3 = {
-            "id": 100,
             "type": "red-flag",
             "location": "100N,50S",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": "Corruption"
         }
-        """Invalid incident record.Incident 'comment' missing."""
+        """Invalid 'intervention' record.Incident 'comment' missing."""
         self.incident4 = {
-            "id": 100,
-            "type": "red-flag",
+            "type": "Intervention",
             "location": "100N,50S",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": ""
         }
+        """Valid 'redflag' record."""
+        self.red_incident1 = {
+            "type": "Redflag",
+            "location": "100N,50S",
+            "Images": "[Images]",
+            "Videos": "[Videos]",
+            "comment": "Violent official."
+        }
+        """Invalid 'redflag' record.Incorrect incident 'type'"""
+        self.red_incident2 = {
+            "type": "Intervention",
+            "location": "100N,50S",
+            "Images": "[Images]",
+            "Videos": "[Videos]",
+            "comment": "Violent official."
+        }
+        """Invalid 'redflag' record.Missing incident 'comment'"""
+        self.red_incident3 = {
+            "type": "Redflag",
+            "location": "100N,50S",
+            "Images": "[Images]",
+            "Videos": "[Videos]",
+            "comment": ""
+        }
+        
         """Location/comment field for patching."""
         self.patch1 = {
             "location": "[Patched Location]",
             "comment": "[Patched comment]"
         }
-        """Invalid Location/comment fields for patching."""
+        """Invalid Location for patching."""
         self.patch2 = {
             "location": "",
-            "comment": ""
+            "comment": "[Patched comment]"
         }
-        """Valid Location/comment fields for patching."""
-        self.patch2 = {
-            "location": "",
+        """Valid comment field for patching."""
+        self.patch3 = {
+            "location": "[Patched Location]",
             "comment": ""
         }
         """Invalid 'intervention' status patch.No admin privilege"""
@@ -174,9 +209,21 @@ class TestUsers(unittest.TestCase):
                                  content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(result["message"], "Please include your "
-                         "firstname and try again.")
     
+    def test_user_signup_bad_firstname_format(self):
+        response = self.app.post('/api/v1/auth/signup', 
+                                 data=json.dumps(self.user4), 
+                                 content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+    
+    def test_user_signup_bad_email_format(self):
+        response = self.app.post('/api/v1/auth/signup', 
+                                 data=json.dumps(self.user5), 
+                                 content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+
     """'Login' Resource tests"""
     def test_valid_user_login(self):
         self.app.post('/api/v1/auth/signup', 
@@ -212,25 +259,40 @@ class TestUsers(unittest.TestCase):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
                       content_type='application/json')
-        response = self.app.get('/api/v1/intervention/100')
+        response = self.app.get('/api/v1/intervention/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(result['data'][0], 100)
-    
+        self.assertEqual(result['data'][0]["id"], 1)
+
     def test_get_specific_intervention_missing_id(self):
-        response = self.app.get('/api/v1/intervention/100')
+        response = self.app.get('/api/v1/intervention/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
-    
-    """'POST intervention' resource tests"""
+
+    """ 'GET specific redflag' resource test"""
+    def test_get_specific_redflag(self):
+        self.app.post('/api/v1/redflags', 
+                      data=json.dumps(self.red_incident1), 
+                      content_type='application/json')
+        response = self.app.get('/api/v1/redflag/1')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(result['data'][0]["id"], 1)
+
+    def test_get_specific_redflag_missing_id(self):
+        response = self.app.get('/api/v1/redflag/1')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 404)
+
+    """ POST 'intervention' resource tests"""
     def test_post_invalid_record_type(self):
         response = self.app.post('/api/v1/interventions', 
                                  data=json.dumps(self.incident3), 
                                  content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(result["message"], "Incident is not type "
-                                            "'Redflag' or 'Intervention'.")
+        self.assertEqual(result["message"], "Incident is not "
+                         "type 'Intervention'.")
     
     def test_post_valid_record(self):
         response = self.app.post('/api/v1/interventions', 
@@ -245,46 +307,112 @@ class TestUsers(unittest.TestCase):
                                  content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(result["message"], "Incident has "
+        self.assertEqual(result["message"], "Intervention has "
                                             "missing 'comment' field.")
     
+    """'POST redflag' resource tests"""
+    def test_post_valid_record_type(self):
+        response = self.app.post('/api/v1/redflags', 
+                                 data=json.dumps(self.red_incident1), 
+                                 content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+    
+    def test_post_invalid_redflag_type(self):
+        response = self.app.post('/api/v1/redflags', 
+                                 data=json.dumps(self.red_incident2), 
+                                 content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(result["message"], "Incident is not "
+                         "type 'Redflag'.")
+    
+    def test_post_invalid_record_comment(self):
+        response = self.app.post('/api/v1/redflags', 
+                                 data=json.dumps(self.red_incident3), 
+                                 content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(result["message"], "Redflag has "
+                                            "missing 'comment' field.")
+   
     """'PATCH 'location' and 'comment' tests"""
-    def test_patch_record_with_valid_location(self):
+    def test_patch_intervention_record_with_valid_location(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
                       content_type='application/json')
-        response = self.app.patch('/api/v1/interventions/100/location',
+        response = self.app.patch('/api/v1/interventions/1/location',
                                   data=json.dumps(self.patch1), 
                                   content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
-    def test_patch_record_with_invalid_location(self):
+    def test_patch_intervention_record_with_invalid_location(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
                       content_type='application/json')
-        response = self.app.patch('/api/v1/interventions/100/location',
+        response = self.app.patch('/api/v1/interventions/1/location',
                                   data=json.dumps(self.patch2), 
                                   content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
-    def test_patch_record_with_invalid_comment(self):
+    def test_patch_intervention_record_with_invalid_comment(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
                       content_type='application/json')
-        response = self.app.patch('/api/v1/interventions/100/comment',
+        response = self.app.patch('/api/v1/interventions/1/comment',
+                                  data=json.dumps(self.patch3), 
+                                  content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+    
+    def test_patch_intervention_record_with_valid_comment(self):
+        self.app.post('/api/v1/interventions', 
+                      data=json.dumps(self.incident1), 
+                      content_type='application/json')
+        response = self.app.patch('/api/v1/interventions/1/comment',
                                   data=json.dumps(self.patch1), 
                                   content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
-    def test_patch_record_with_valid_comment(self):
-        self.app.post('/api/v1/interventions', 
-                      data=json.dumps(self.incident1), 
+    def test_patch_redflags_record_with_valid_location(self):
+        self.app.post('/api/v1/redflags', 
+                      data=json.dumps(self.red_incident1), 
                       content_type='application/json')
-        response = self.app.patch('/api/v1/interventions/100/comment',
+        response = self.app.patch('/api/v1/redflags/1/location',
+                                  data=json.dumps(self.patch1), 
+                                  content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+    
+    def test_patch_redflags_record_with_invalid_location(self):
+        self.app.post('/api/v1/redflags', 
+                      data=json.dumps(self.red_incident1), 
+                      content_type='application/json')
+        response = self.app.patch('/api/v1/redflags/1/location',
                                   data=json.dumps(self.patch2), 
+                                  content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+    
+    def test_patch_redflags_record_with_valid_comment(self):
+        self.app.post('/api/v1/redflags', 
+                      data=json.dumps(self.red_incident1), 
+                      content_type='application/json')
+        response = self.app.patch('/api/v1/redflags/1/comment',
+                                  data=json.dumps(self.patch1), 
+                                  content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+    
+    def test_patch_redflags_record_with_invalid_comment(self):
+        self.app.post('/api/v1/redflags', 
+                      data=json.dumps(self.red_incident1), 
+                      content_type='application/json')
+        response = self.app.patch('/api/v1/redflags/1/comment',
+                                  data=json.dumps(self.patch3), 
                                   content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
@@ -332,6 +460,39 @@ class TestUsers(unittest.TestCase):
                                   content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
+    
+    """ DELETE 'Intervention' and 'Redflag' tests"""
+    def test_delete_intervention_record_with_valid_id(self):
+        self.app.post('/api/v1/interventions', 
+                      data=json.dumps(self.incident1), 
+                      content_type='application/json')
+        response = self.app.delete('/api/v1/intervention/1')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+    
+    def test_delete_intervention_record_with_invalid_id(self):
+        self.app.post('/api/v1/interventions', 
+                      data=json.dumps(self.incident1), 
+                      content_type='application/json')
+        response = self.app.delete('/api/v1/intervention/100')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 404)
+    
+    def test_delete_redflag_record_with_valid_id(self):
+        self.app.post('/api/v1/redflags', 
+                      data=json.dumps(self.red_incident1), 
+                      content_type='application/json')
+        response = self.app.delete('/api/v1/redflag/1')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+    
+    def test_delete_redflag_record_with_invalid_id(self):
+        self.app.post('/api/v1/redflags', 
+                      data=json.dumps(self.red_incident1), 
+                      content_type='application/json')
+        response = self.app.delete('/api/v1/redflag/100')
+        result = json.loads(response.data)
+        self.assertEqual(response.status_code, 404)
     
     database.drop_tables()
 
