@@ -262,7 +262,7 @@ class TestUsers(unittest.TestCase):
         response = self.app.get('/api/v1/intervention/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(result['data'][0]["id"], 1)
+        self.assertEqual(result['data'][0]["id"], '1')
 
     def test_get_specific_intervention_missing_id(self):
         response = self.app.get('/api/v1/intervention/1')
@@ -277,7 +277,7 @@ class TestUsers(unittest.TestCase):
         response = self.app.get('/api/v1/redflag/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(result['data'][0]["id"], 1)
+        self.assertEqual(result['data'][0]["id"], '1')
 
     def test_get_specific_redflag_missing_id(self):
         response = self.app.get('/api/v1/redflag/1')
@@ -441,21 +441,21 @@ class TestUsers(unittest.TestCase):
     
     """ 'Redflag status' test"""
     def test_red_patch_status_no_admin(self):
-        response = self.app.patch('/api/v1/red_flags/100/status',
+        response = self.app.patch('/api/v1/redflags/1/status',
                                   data=json.dumps(self.red_status1), 
                                   content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 403)
     
     def test_red_patch_status_bad_type(self):
-        response = self.app.patch('/api/v1/red_flags/100/status',
+        response = self.app.patch('/api/v1/redflags/1/status',
                                   data=json.dumps(self.red_status2), 
                                   content_type='application/json')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
     def test_red_patch_status_bad_status(self):
-        response = self.app.patch('/api/v1/red_flags/100/status',
+        response = self.app.patch('/api/v1/redflags/1/status',
                                   data=json.dumps(self.red_status3), 
                                   content_type='application/json')
         result = json.loads(response.data)

@@ -131,8 +131,35 @@ class Database():
         """Fetch a specific intervention record"""
         con = self.connect()
         cursor = con.cursor()
-        sql = """SELECT * FROM incidents WHERE id = %s"""
+        sql = """SELECT * FROM incidents WHERE id = %s AND \
+              type = 'Intervention'"""
         cursor.execute(sql, (intervention_id,))
+        record = cursor.fetchone()
+        if record is None or record is "":
+            return False
+        cursor.close()
+        con.commit()
+        con.close()
+        return record
+    
+    def get_latest_id(self):
+        """Fetch the 'id' of the latest incident record"""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT id FROM incidents ORDER BY id DESC")
+        record = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+        return record
+    
+    def get_redflag(self, redflag_id):
+        """Fetch a specific redflag record"""
+        con = self.connect()
+        cursor = con.cursor()
+        sql = """SELECT * FROM incidents WHERE id = %s AND \
+              type = 'Redflag'"""
+        cursor.execute(sql, (redflag_id,))
         record = cursor.fetchone()
         if record is None or record is "":
             return False

@@ -21,19 +21,19 @@ api = Api(version_one)
 
 api.add_resource(Interventions, '/interventions')
 api.add_resource(Redflags, '/redflags')
-api.add_resource(Intervention, '/intervention/<int:intervention_id>')
-api.add_resource(Redflag, '/redflag/<int:redflag_id>')
+api.add_resource(Intervention, '/intervention/<intervention_id>')
+api.add_resource(Redflag, '/redflag/<redflag_id>')
 api.add_resource(Signup, '/auth/signup')
 api.add_resource(Login, '/auth/login')
 api.add_resource(UpdateInterventionLocation,
-                 '/interventions/<int:intervention_id>/location')
+                 '/interventions/<intervention_id>/location')
 api.add_resource(UpdateRedflagLocation,
-                 '/redflags/<int:redflag_id>/location')
+                 '/redflags/<redflag_id>/location')
 api.add_resource(UpdateInterventionComment,
                  '/interventions/<int:intervention_id>/comment')
 api.add_resource(UpdateRedflagComment,
-                 '/redflags/<int:redflag_id>/comment')
+                 '/redflags/<redflag_id>/comment')
 api.add_resource(Interventionstatus,
-                 '/interventions/<int:intervention_id>/status')
-api.add_resource(Redflagstatus, '/red_flags/<int:red_flag_id>/status')
+                 '/interventions/<intervention_id>/status')
+api.add_resource(Redflagstatus, '/redflags/<redflag_id>/status')
 api.add_resource(Protected, '/protected')
