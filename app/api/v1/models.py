@@ -1,15 +1,18 @@
 import psycopg2
+import os
 
 url = "dbname='ireporter' host='localhost'\
-             port='5432' user='postgres' password='Nanbada13'"
+            port='5432' user='postgres' password='Nanbada13'"
 
-test_url = "dbname='testing' host='localhost'\
-             port='5432' user='postgres' password='Nanbada13'"
+test_url = "dbname='testing' host='localhost' \
+            port='5432' user='postgres' password='Nanbada13'"
+
+DATABASE_URL = os.getenv('DATABASE_URL', url)
 
 
 class Database():
     def connect(self):
-        connect = psycopg2.connect(url)
+        connect = psycopg2.connect(DATABASE_URL)
         return connect
 
     def create_tables(self):
