@@ -3,10 +3,6 @@ import os
 
 url = "dbname='ireporter' host='localhost'\
             port='5432' user='postgres' password='Nanbada13'"
-
-test_url = "dbname='testing' host='localhost' \
-            port='5432' user='postgres' password='Nanbada13'"
-
 DATABASE_URL = os.getenv('DATABASE_URL', url)
 
 
@@ -206,12 +202,14 @@ class Database():
         cursor.close()
         con.commit()
         con.close()
+        if credentials is None:
+            return False
         if username != credentials[0]:
-            return {"message": "Invalid Username.Please try again"}, 400
+            return False
         if password != credentials[1]:
-            return {"message": "Invalid Password.Please try again"}, 400
+            return False
         return True
-          
+
     def delete_record(self, intervention_id):
         """Delete a specific intervention record"""
         con = self.connect()

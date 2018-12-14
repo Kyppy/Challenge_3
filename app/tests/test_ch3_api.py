@@ -262,7 +262,7 @@ class TestUsers(unittest.TestCase):
         response = self.app.get('/api/v1/intervention/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(result['data'][0]["id"], '1')
+        self.assertEqual(result['data'][0]["id"], 1)
 
     def test_get_specific_intervention_missing_id(self):
         response = self.app.get('/api/v1/intervention/1')
@@ -277,7 +277,7 @@ class TestUsers(unittest.TestCase):
         response = self.app.get('/api/v1/redflag/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(result['data'][0]["id"], '1')
+        self.assertEqual(result['data'][0]["id"], 1)
 
     def test_get_specific_redflag_missing_id(self):
         response = self.app.get('/api/v1/redflag/1')

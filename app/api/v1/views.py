@@ -83,7 +83,7 @@ class Intervention(Resource):
                 return{"message": "No incident id provided"}, 400
             inter = db.get_intervention(intervention_id)
             if inter:
-                inter_data = {"id": intervention_id, "createdOn": inter[1],
+                inter_data = {"id": inter[0], "createdOn": inter[1],
                               "createdBy": inter[2], "type": inter[3],
                               "location": inter[4], "status": inter[5],
                               "Images": inter[6], "Videos": inter[7],
@@ -121,7 +121,7 @@ class Redflag(Resource):
                 return{"message": "No incident id provided"}, 400
             red = db.get_redflag(redflag_id)
             if red:
-                red_data = {"id": redflag_id, "createdOn": red[1],
+                red_data = {"id": red[0], "createdOn": red[1],
                             "createdBy": red[2], "type": red[3],
                             "location": red[4], "status": red[5],
                             "Images": red[6], "Videos": red[7],
@@ -309,7 +309,7 @@ class Interventionstatus(Resource):
                         "Please select an incident "
                         "of type 'Intervention.'"}, 400
             status = data["status"]
-            if status != 'Resolved' or status != 'Rejected':
+            if status != 'Resolved' and status != 'Rejected':
                 return {"message": "Invalid update information"
                         "check your input and try again."}, 400
             inter = db.get_intervention(intervention_id)
@@ -317,7 +317,7 @@ class Interventionstatus(Resource):
                 patch_data = (status, intervention_id)
                 db.update_intervention_status(patch_data)
                 return{"status": 200, "data":
-                       [{"id": intervention_id, "message":
+                       [{"id": int(intervention_id), "message":
                         "Updated intervention record status"}]}, 200
             return{"message": "No record with id {} exists."
                    .format(intervention_id)}, 404
@@ -339,18 +339,18 @@ class Redflagstatus(Resource):
                 return {"message": "Invalid incident type. "
                         "Please select an incident of type 'Redflag'."}, 400
             status = data["status"]
-            if status != 'Resolved' or status != 'Rejected':
+            if status != 'Resolved' and status != 'Rejected':
                 return {"message": "Invalid update information"
                         "check your input and try again."}, 400
-            inter = db.get_redflag(intervention_id)
+            inter = db.get_redflag(redflag_id)
             if inter:
-                patch_data = (status, red_flag_id)
+                patch_data = (status, redflag_id)
                 db.update_redflag_status(patch_data)
                 return{"status": 200, "data":
-                       [{"id": red_flag_id, "message":
+                       [{"id": int(redflag_id), "message":
                         "Updated redflag record status"}]}, 200
             return{"message": "No record with id {} exists."
-                   .format(intervention_id)}, 404
+                   .format(redflag_id)}, 404
         return {"message": "Bad credentials.Login failed"}, 400
 
 
