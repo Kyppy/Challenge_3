@@ -1,7 +1,6 @@
 from flask import Flask, Blueprint
 from flask_jwt_extended import(JWTManager, jwt_required, create_access_token)
 from .api.v1 import version_one as v1
-from instance.config import config
 import os
 
 
