@@ -1,6 +1,6 @@
 import psycopg2
 import os
-
+from passlib.hash import sha256_crypt
 
 url = "dbname='ireporter' host='localhost'\
             port='5432' user='postgres' password='Nanbada13'"
@@ -24,6 +24,35 @@ class Database():
         cursor.close()
         con.commit()
         con.close()
+    
+    def check_rank(self, username):
+        """Check if given user has elevated permissions"""
+        con = self.connect()
+        cursor = con.cursor()
+        sql = """SELECT * FROM users WHERE username = %s AND \
+              isAdmin = TRUE"""
+        cursor.execute(sql, (username,))
+        record = cursor.fetchone()
+        if record is None or record is "":
+            return False
+        cursor.close()
+        con.commit()
+        con.close()
+        return True
+    
+    def fetch_type(self, incident_id):
+        """Returns the 'type' of a given incident"""
+        con = self.connect()
+        cursor = con.cursor()
+        sql = """SELECT type,id FROM incidents WHERE id = %s"""
+        cursor.execute(sql, (incident_id,))
+        record = cursor.fetchone()
+        if record is None or record is "":
+            return False
+        cursor.close()
+        con.commit()
+        con.close()
+        return record[0]
     
     def drop_tables(self):
         """Drop 'users' and 'incidents' tables from database"""
@@ -171,6 +200,17 @@ class Database():
         con.close()
         return record
     
+    def user_list(self):
+        """Selects list of users in descending id order"""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT id FROM users ORDER BY id DESC")
+        record = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+        return record
+    
     def get_redflag(self, redflag_id):
         """Fetch a specific redflag record"""
         con = self.connect()
@@ -228,6 +268,25 @@ class Database():
         if password != credentials[1]:
             return False
         return True
+    
+    def check_valid(self, username, password):
+        """Compare input username to existing usernames in database.
+        If username matches return hashed password."""
+        con = self.connect()
+        cursor = con.cursor()
+        cursor.execute("SELECT username,password \
+                        FROM users WHERE username = %s", (username,))
+        credentials = cursor.fetchone()
+        cursor.close()
+        con.commit()
+        con.close()
+        if credentials is None:
+            return False
+        if username != credentials[0]:
+            return False
+        if sha256_crypt.verify(password, credentials[1]):
+            return True
+        return False
 
     def delete_record(self, intervention_id):
         """Delete a specific intervention record"""
@@ -248,7 +307,7 @@ class Database():
             email VARCHAR UNIQUE NOT NULL,
             phoneNumber VARCHAR,
             username VARCHAR(25) UNIQUE NOT NULL,
-            password VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR UNIQUE NOT NULL,
             registered VARCHAR(25) DEFAULT 'Date-time placeholder',
             isAdmin BOOLEAN DEFAULT 'False' NOT NULL )"""
         incidents = """CREATE TABLE IF NOT EXISTS incidents (

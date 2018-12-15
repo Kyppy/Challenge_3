@@ -84,7 +84,7 @@ class TestUsers(unittest.TestCase):
         """Valid 'Intervention' record"""
         self.incident1 = {
             "type": "Intervention",
-            "location": "100N,50S",
+            "location": "10N,50E",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": "Corruption"
@@ -92,7 +92,7 @@ class TestUsers(unittest.TestCase):
         """Invalid incident record.Incorrect incident 'type'."""
         self.incident3 = {
             "type": "red-flag",
-            "location": "100N,50S",
+            "location": "10N,50E",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": "Corruption"
@@ -100,7 +100,7 @@ class TestUsers(unittest.TestCase):
         """Invalid 'intervention' record.Incident 'comment' missing."""
         self.incident4 = {
             "type": "Intervention",
-            "location": "100N,50S",
+            "location": "10N,50E",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": ""
@@ -108,7 +108,7 @@ class TestUsers(unittest.TestCase):
         """Valid 'redflag' record."""
         self.red_incident1 = {
             "type": "Redflag",
-            "location": "100N,50S",
+            "location": "10N,50E",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": "Violent official."
@@ -116,7 +116,7 @@ class TestUsers(unittest.TestCase):
         """Invalid 'redflag' record.Incorrect incident 'type'"""
         self.red_incident2 = {
             "type": "Intervention",
-            "location": "100N,50S",
+            "location": "10N,50E",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": "Violent official."
@@ -124,7 +124,7 @@ class TestUsers(unittest.TestCase):
         """Invalid 'redflag' record.Missing incident 'comment'"""
         self.red_incident3 = {
             "type": "Redflag",
-            "location": "100N,50S",
+            "location": "10N,50E",
             "Images": "[Images]",
             "Videos": "[Videos]",
             "comment": ""
@@ -132,12 +132,12 @@ class TestUsers(unittest.TestCase):
         
         """Location/comment field for patching."""
         self.patch1 = {
-            "location": "[Patched Location]",
+            "location": "90S,12W",
             "comment": "[Patched comment]"
         }
         """Invalid Location for patching."""
         self.patch2 = {
-            "location": "",
+            "location": "150E,400W",
             "comment": "[Patched comment]"
         }
         """Valid comment field for patching."""
@@ -466,7 +466,7 @@ class TestUsers(unittest.TestCase):
                                   content_type='application/json',
                                   headers={"Authorization": self.access})
         result = json.loads(response.data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 400)
     
     def test_int_patch_status_bad_type(self):
         response = self.app.patch('/api/v1/interventions/100/status',
@@ -491,7 +491,7 @@ class TestUsers(unittest.TestCase):
                                   content_type='application/json',
                                   headers={"Authorization": self.access})
         result = json.loads(response.data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 400)
     
     def test_red_patch_status_bad_type(self):
         response = self.app.patch('/api/v1/redflags/1/status',
