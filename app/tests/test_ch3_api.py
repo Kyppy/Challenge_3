@@ -16,6 +16,16 @@ class TestUsers(unittest.TestCase):
         self.app = app.test_client()
         """User info for testing user-related resources"""
         """Valid signup credentials"""
+        self.user0 = {
+            "firstname": "John",
+            "lastname": "Doe",
+            "othername": "",
+            "email": "Brian@demo.com",
+            "phoneNumber": "079-364-0944",
+            "username": "NSP",
+            "password": "Danny69",
+            "isAdmin": "False"
+        }
         self.user1 = {
             "firstname": "John",
             "lastname": "Doe",
@@ -177,15 +187,23 @@ class TestUsers(unittest.TestCase):
             "type": 'Redflag',
             "status": 'Solved'
         }
-
+        
+        response = self.app.post('/api/v1/auth/signup', 
+                                 data=json.dumps(self.user0), 
+                                 content_type='application/json')
+        result = json.loads(response.data)
+        self.assertEqual(result['status'], 201)
+        self.token = result['data'][0]['token']
+        self.access = "Bearer {}".format(self.token)
+      
     """'Signup' resource tests"""
     def test_user_signup(self):
         response = self.app.post('/api/v1/auth/signup', 
                                  data=json.dumps(self.user1), 
                                  content_type='application/json')
         result = json.loads(response.data)
-        self.assertEqual(result['status'], 201)
-    
+        self.assertEqual(response.status_code, 201)
+
     def test_user_signup_repeated_credentials(self):
         self.app.post('/api/v1/auth/signup', 
                       data=json.dumps(self.user1), 
@@ -258,12 +276,13 @@ class TestUsers(unittest.TestCase):
     def test_get_specific_intervention(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.get('/api/v1/intervention/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result['data'][0]["id"], 1)
-
+    
     def test_get_specific_intervention_missing_id(self):
         response = self.app.get('/api/v1/intervention/1')
         result = json.loads(response.data)
@@ -273,12 +292,13 @@ class TestUsers(unittest.TestCase):
     def test_get_specific_redflag(self):
         self.app.post('/api/v1/redflags', 
                       data=json.dumps(self.red_incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.get('/api/v1/redflag/1')
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(result['data'][0]["id"], 1)
-
+    
     def test_get_specific_redflag_missing_id(self):
         response = self.app.get('/api/v1/redflag/1')
         result = json.loads(response.data)
@@ -288,7 +308,8 @@ class TestUsers(unittest.TestCase):
     def test_post_invalid_record_type(self):
         response = self.app.post('/api/v1/interventions', 
                                  data=json.dumps(self.incident3), 
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(result["message"], "Incident is not "
@@ -297,14 +318,16 @@ class TestUsers(unittest.TestCase):
     def test_post_valid_record(self):
         response = self.app.post('/api/v1/interventions', 
                                  data=json.dumps(self.incident1), 
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
     
     def test_post_invalid_record_comment(self):
         response = self.app.post('/api/v1/interventions', 
                                  data=json.dumps(self.incident4), 
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(result["message"], "Intervention has "
@@ -314,14 +337,16 @@ class TestUsers(unittest.TestCase):
     def test_post_valid_record_type(self):
         response = self.app.post('/api/v1/redflags', 
                                  data=json.dumps(self.red_incident1), 
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
     
     def test_post_invalid_redflag_type(self):
         response = self.app.post('/api/v1/redflags', 
                                  data=json.dumps(self.red_incident2), 
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(result["message"], "Incident is not "
@@ -330,90 +355,107 @@ class TestUsers(unittest.TestCase):
     def test_post_invalid_record_comment(self):
         response = self.app.post('/api/v1/redflags', 
                                  data=json.dumps(self.red_incident3), 
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(result["message"], "Redflag has "
                                             "missing 'comment' field.")
-   
+    
     """'PATCH 'location' and 'comment' tests"""
     def test_patch_intervention_record_with_valid_location(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/interventions/1/location',
                                   data=json.dumps(self.patch1), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
     def test_patch_intervention_record_with_invalid_location(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/interventions/1/location',
                                   data=json.dumps(self.patch2), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
     def test_patch_intervention_record_with_invalid_comment(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/interventions/1/comment',
                                   data=json.dumps(self.patch3), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
     def test_patch_intervention_record_with_valid_comment(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/interventions/1/comment',
                                   data=json.dumps(self.patch1), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
     def test_patch_redflags_record_with_valid_location(self):
         self.app.post('/api/v1/redflags', 
                       data=json.dumps(self.red_incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/redflags/1/location',
                                   data=json.dumps(self.patch1), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
     def test_patch_redflags_record_with_invalid_location(self):
         self.app.post('/api/v1/redflags', 
                       data=json.dumps(self.red_incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/redflags/1/location',
                                   data=json.dumps(self.patch2), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
     def test_patch_redflags_record_with_valid_comment(self):
         self.app.post('/api/v1/redflags', 
                       data=json.dumps(self.red_incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/redflags/1/comment',
                                   data=json.dumps(self.patch1), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
     def test_patch_redflags_record_with_invalid_comment(self):
         self.app.post('/api/v1/redflags', 
                       data=json.dumps(self.red_incident1), 
-                      content_type='application/json')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
         response = self.app.patch('/api/v1/redflags/1/comment',
                                   data=json.dumps(self.patch3), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
@@ -421,21 +463,24 @@ class TestUsers(unittest.TestCase):
     def test_int_patch_status_no_admin(self):
         response = self.app.patch('/api/v1/interventions/100/status',
                                   data=json.dumps(self.int_status1), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 403)
     
     def test_int_patch_status_bad_type(self):
         response = self.app.patch('/api/v1/interventions/100/status',
                                   data=json.dumps(self.int_status2), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
     def test_int_patch_status_bad_status(self):
         response = self.app.patch('/api/v1/interventions/100/status',
                                   data=json.dumps(self.int_status3), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
@@ -443,21 +488,24 @@ class TestUsers(unittest.TestCase):
     def test_red_patch_status_no_admin(self):
         response = self.app.patch('/api/v1/redflags/1/status',
                                   data=json.dumps(self.red_status1), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 403)
     
     def test_red_patch_status_bad_type(self):
         response = self.app.patch('/api/v1/redflags/1/status',
                                   data=json.dumps(self.red_status2), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
     def test_red_patch_status_bad_status(self):
         response = self.app.patch('/api/v1/redflags/1/status',
                                   data=json.dumps(self.red_status3), 
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
     
@@ -465,32 +513,38 @@ class TestUsers(unittest.TestCase):
     def test_delete_intervention_record_with_valid_id(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
-                      content_type='application/json')
-        response = self.app.delete('/api/v1/intervention/1')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
+        response = self.app.delete('/api/v1/intervention/1', 
+                                   headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
     def test_delete_intervention_record_with_invalid_id(self):
         self.app.post('/api/v1/interventions', 
                       data=json.dumps(self.incident1), 
-                      content_type='application/json')
-        response = self.app.delete('/api/v1/intervention/100')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
+        response = self.app.delete('/api/v1/intervention/100', 
+                                   headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
     
     def test_delete_redflag_record_with_valid_id(self):
         self.app.post('/api/v1/redflags', 
                       data=json.dumps(self.red_incident1), 
-                      content_type='application/json')
-        response = self.app.delete('/api/v1/redflag/1')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
+        response = self.app.delete('/api/v1/redflag/1', headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
     
     def test_delete_redflag_record_with_invalid_id(self):
         self.app.post('/api/v1/redflags', 
                       data=json.dumps(self.red_incident1), 
-                      content_type='application/json')
-        response = self.app.delete('/api/v1/redflag/100')
+                      content_type='application/json',
+                      headers={"Authorization": self.access})
+        response = self.app.delete('/api/v1/redflag/100', headers={"Authorization": self.access})
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
     

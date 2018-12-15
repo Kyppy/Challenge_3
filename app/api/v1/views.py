@@ -1,15 +1,18 @@
 import psycopg2
-import datetime
+from datetime import datetime
 import re
 from flask import Flask, request
 from flask_restful import Resource
-from flask_jwt_extended import(JWTManager, jwt_required, create_access_token)
+from flask_jwt_extended import(JWTManager, jwt_required, create_access_token,
+                               get_jwt_identity)
 from .models import Database
+from datetime import timedelta
 
 
 db = Database()
 db.create_tables()
-now = datetime.datetime.now()
+expires = timedelta(minutes=60)
+now = datetime.now()
 id_pattern = re.compile(r'^[0-9]+$')
 
 
@@ -26,6 +29,7 @@ class Interventions(Resource):
             intervention_list.append(inter_data)
         return {"status": 200, "data": intervention_list}, 200
 
+    @jwt_required
     def post(self):
         data = request.get_json(silent=True)
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -34,7 +38,7 @@ class Interventions(Resource):
         if data['type'] == "Intervention":
             post_data = (data['type'], data['location'],
                          data['Images'], data['Videos'],
-                         data['comment'], timestamp)
+                         data['comment'], timestamp, get_jwt_identity())
             db.insert_intervention(post_data)
             _id = db.get_latest_id()
             return{"status": 201, "data": [{"id": _id[0], 
@@ -56,6 +60,7 @@ class Redflags(Resource):
             redflag_list.append(red_data)
         return {"status": 200, "data": redflag_list}, 200
 
+    @jwt_required
     def post(self):
         data = request.get_json(silent=True)
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -64,7 +69,7 @@ class Redflags(Resource):
         if data['type'] == "Redflag":
             post_data = (data['type'], data['location'],
                          data['Images'], data['Videos'],
-                         data['comment'], timestamp)
+                         data['comment'], timestamp, get_jwt_identity())
             db.insert_intervention(post_data)
             _id = db.get_latest_id()
             return{"status": 201, "data": [{"id": _id[0],
@@ -94,6 +99,7 @@ class Intervention(Resource):
                    .format(intervention_id)}, 404
         return {"message": "Invalid incident id in URL"}
 
+    @jwt_required
     def delete(self, intervention_id):
         id_string = str(intervention_id)
         id_check = re.match(id_pattern, id_string)
@@ -102,10 +108,16 @@ class Intervention(Resource):
                 return{"message": "No incident id provided"}, 400
             inter = db.get_intervention(intervention_id)
             if inter:
-                db.delete_record(intervention_id)
-                return {"status": 200, "data": [{"id": intervention_id,
-                        "message": "Intervention record "
-                                                 "has been deleted"}]}, 200
+                check_data = (intervention_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    db.delete_record(intervention_id)
+                    return {"status": 200, "data": [{"id": intervention_id,
+                            "message": "Intervention record "
+                                                    "has been deleted"}]}, 200
+                return{"message": "Incident id associated with other account. "
+                                  "Please select an incident id "
+                                  "for one of your existing posts."}
             return{"message": "No intervention record with id {} exists."
                    .format(intervention_id)}, 404
         return {"message": "Invalid incident id in URL"}
@@ -132,6 +144,7 @@ class Redflag(Resource):
                    .format(redflag_id)}, 404
         return {"message": "Invalid incident id in URL"}
 
+    @jwt_required
     def delete(self, redflag_id):
         id_string = str(redflag_id)
         id_check = re.match(id_pattern, id_string)
@@ -140,9 +153,16 @@ class Redflag(Resource):
                 return{"message": "No incident id provided"}, 400
             red = db.get_redflag(redflag_id)
             if red:
-                db.delete_record(redflag_id)
-                return {"status": 200, "data": [{"id": redflag_id,
-                        "message": "Redflag record has been deleted"}]}, 200
+                check_data = (redflag_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    db.delete_record(redflag_id)
+                    return {"status": 200, "data": [{"id": redflag_id,
+                            "message": "Redflag record "
+                                                    "has been deleted"}]}, 200
+                return{"message": "Incident id associated with other account. "
+                                  "Please select an incident id "
+                                  "for one of your existing posts."}
             return{"message": "No redflag record with id {} exists."
                    .format(redflag_id)}, 404
         return {"message": "Invalid incident id in URL"}
@@ -175,10 +195,11 @@ class Signup(Resource):
         if first and last and other and mail and phone and user and _pass:
             valid = db.authorise_signup(username, password, email)
             if valid:
-                access_token = create_access_token(identity=username)
+                access_token = create_access_token(identity=username,
+                                                   expires_delta=expires)
                 post_data = (data['firstname'], data['lastname'],
                              data['othername'], email, data['phoneNumber'],
-                             username, password, data['isAdmin'])
+                             username, password, data['isAdmin'],)
                 db.insert_user(post_data)
                 return{"status": 201, "data":
                        [{"token": access_token, "user": data}]}, 201
@@ -199,13 +220,15 @@ class Login(Resource):
                     "username or password and try again."}, 400
         valid = db.authorise_login(username, password)
         if valid:
-            access_token = create_access_token(identity=username)
+            access_token = create_access_token(identity=username,
+                                               expires_delta=expires)
             return{"status": 200, "data":
                    [{"token": access_token, "user": data}]}, 200
         return {"message": "Bad credentials.Login failed"}, 400
 
 
 class UpdateInterventionLocation(Resource):
+    @jwt_required
     def patch(self, intervention_id):
         id_string = str(intervention_id)
         id_check = re.match(id_pattern, id_string)
@@ -217,17 +240,25 @@ class UpdateInterventionLocation(Resource):
                         "check your input and try again"}, 400
             inter = db.get_intervention(intervention_id)
             if inter:
-                patch_data = (location, intervention_id)
-                db.update_intervention_location(patch_data)
-                return{"status": 200, "data":
-                       [{"id": intervention_id, "message": 
-                        "Updated intervention record's location"}]}, 200
+                check_data = (intervention_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    patch_data = (location, intervention_id)
+                    db.update_intervention_location(patch_data)
+                    return{"status": 200, "data":
+                           [{"id": intervention_id, "message": 
+                            "Updated intervention record's location"}]}, 200
+                return{"message": "Incident id associated "
+                       "with other account. "
+                       "Please select an incident id "
+                       "for one of your existing posts."}
             return{"message": "No record with id {} exists."
                    .format(intervention_id)}, 404
         return {"message": "Bad credentials.Login failed"}, 400
 
 
 class UpdateRedflagLocation(Resource):
+    @jwt_required
     def patch(self, redflag_id):
         id_string = str(redflag_id)
         id_check = re.match(id_pattern, id_string)
@@ -239,17 +270,25 @@ class UpdateRedflagLocation(Resource):
                         "check your input and try again"}, 400
             inter = db.get_redflag(redflag_id)
             if inter:
-                patch_data = (location, redflag_id)
-                db.update_intervention_location(patch_data)
-                return{"status": 200, "data":
-                       [{"id": redflag_id, "message":
-                        "Updated redflag record's location"}]}, 200
+                check_data = (redflag_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    patch_data = (location, redflag_id)
+                    db.update_intervention_location(patch_data)
+                    return{"status": 200, "data":
+                           [{"id": redflag_id, "message":
+                            "Updated redflag record's location"}]}, 200
+                return{"message": "Incident id associated "
+                       "with other account. "
+                       "Please select an incident id "
+                       "for one of your existing posts."}
             return{"message": "No record with id {} exists."
                    .format(redflag_id)}, 404
         return {"message": "Bad credentials.Login failed"}, 400
 
 
 class UpdateInterventionComment(Resource):
+    @jwt_required
     def patch(self, intervention_id):
         id_string = str(intervention_id)
         id_check = re.match(id_pattern, id_string)
@@ -261,17 +300,25 @@ class UpdateInterventionComment(Resource):
                         "check your input and try again"}, 400
             inter = db.get_intervention(intervention_id)
             if inter:
-                patch_data = (comment, intervention_id)
-                db.update_intervention_comment(patch_data)
-                return{"status": 200, "data":
-                       [{"id": intervention_id, "message": 
-                        "Updated intervention record comment"}]}, 200
+                check_data = (intervention_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    patch_data = (comment, intervention_id)
+                    db.update_intervention_comment(patch_data)
+                    return{"status": 200, "data":
+                           [{"id": intervention_id, "message": 
+                            "Updated intervention record comment"}]}, 200
+                return{"message": "Incident id associated "
+                       "with other account. "
+                       "Please select an incident id "
+                       "for one of your existing posts."}
             return{"message": "No record with id {} exists."
                    .format(intervention_id)}, 404
         return {"message": "Bad credentials.Login failed"}, 400
 
 
 class UpdateRedflagComment(Resource):
+    @jwt_required
     def patch(self, redflag_id):
         id_string = str(redflag_id)
         id_check = re.match(id_pattern, id_string)
@@ -283,17 +330,25 @@ class UpdateRedflagComment(Resource):
                         "check your input and try again"}, 400
             inter = db.get_redflag(redflag_id)
             if inter:
-                patch_data = (comment, redflag_id)
-                db.update_intervention_comment(patch_data)
-                return{"status": 200, "data":
-                       [{"id": redflag_id, "message":
-                        "Updated redflag record comment"}]}, 200
+                check_data = (redflag_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    patch_data = (comment, redflag_id)
+                    db.update_intervention_comment(patch_data)
+                    return{"status": 200, "data":
+                           [{"id": redflag_id, "message":
+                            "Updated redflag record comment"}]}, 200
+                return{"message": "Incident id associated "
+                       "with other account. "
+                       "Please select an incident id "
+                       "for one of your existing posts."}
             return{"message": "No record with id {} exists."
                    .format(redflag_id)}, 404
         return {"message": "Bad credentials.Login failed"}, 400
 
 
 class Interventionstatus(Resource):
+    @jwt_required
     def patch(self, intervention_id):
         id_string = str(intervention_id)
         id_check = re.match(id_pattern, id_string)
@@ -314,17 +369,25 @@ class Interventionstatus(Resource):
                         "check your input and try again."}, 400
             inter = db.get_intervention(intervention_id)
             if inter:
-                patch_data = (status, intervention_id)
-                db.update_intervention_status(patch_data)
-                return{"status": 200, "data":
-                       [{"id": int(intervention_id), "message":
-                        "Updated intervention record status"}]}, 200
+                check_data = (intervention_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    patch_data = (status, intervention_id)
+                    db.update_intervention_status(patch_data)
+                    return{"status": 200, "data":
+                           [{"id": int(intervention_id), "message":
+                            "Updated intervention record status"}]}, 200
+                return{"message": "Incident id associated "
+                       "with other account. "
+                       "Please select an incident id "
+                       "for one of your existing posts."}
             return{"message": "No record with id {} exists."
                    .format(intervention_id)}, 404
         return {"message": "Bad credentials.Login failed"}, 400
 
 
 class Redflagstatus(Resource):
+    @jwt_required
     def patch(self, redflag_id):
         id_string = str(redflag_id)
         id_check = re.match(id_pattern, id_string)
@@ -344,11 +407,18 @@ class Redflagstatus(Resource):
                         "check your input and try again."}, 400
             inter = db.get_redflag(redflag_id)
             if inter:
-                patch_data = (status, redflag_id)
-                db.update_redflag_status(patch_data)
-                return{"status": 200, "data":
-                       [{"id": int(redflag_id), "message":
-                        "Updated redflag record status"}]}, 200
+                check_data = (redflag_id, get_jwt_identity())
+                identity = db.check_user(check_data)
+                if identity:
+                    patch_data = (status, redflag_id)
+                    db.update_redflag_status(patch_data)
+                    return{"status": 200, "data":
+                           [{"id": int(redflag_id), "message":
+                            "Updated redflag record status"}]}, 200
+                return{"message": "Incident id associated "
+                       "with other account. "
+                       "Please select an incident id "
+                       "for one of your existing posts."}
             return{"message": "No record with id {} exists."
                    .format(redflag_id)}, 404
         return {"message": "Bad credentials.Login failed"}, 400

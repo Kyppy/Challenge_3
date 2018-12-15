@@ -1,8 +1,10 @@
 import psycopg2
 import os
 
+
 url = "dbname='ireporter' host='localhost'\
             port='5432' user='postgres' password='Nanbada13'"
+
 DATABASE_URL = os.getenv('DATABASE_URL', url)
 
 
@@ -31,14 +33,15 @@ class Database():
         cursor.close()
         con.commit()
         con.close()
-
+    
     def insert_intervention(self, post_data):
         """Insert a new intervention row into the database"""
         con = self.connect()
         cursor = con.cursor()
-        sql = """INSERT INTO incidents(type,location,Images,Videos,comment,createdOn)
+        sql = """INSERT INTO incidents(type,location,Images,
+                 Videos,comment,createdOn,createdBy)
                  VALUES(%s, %s, %s,
-                 %s, %s, %s)"""
+                 %s, %s, %s, %s)"""
         cursor.execute(sql, post_data)
         cursor.close()
         con.commit()
@@ -141,6 +144,22 @@ class Database():
         con.close()
         return record
     
+    def check_user(self, check_data):
+        """Check if the session username \
+        matches username in incident record"""
+        con = self.connect()
+        cursor = con.cursor()
+        sql = """SELECT * FROM incidents WHERE id = %s AND \
+              createdBy = %s"""
+        cursor.execute(sql, check_data)
+        record = cursor.fetchone()
+        if record is None or record is "":
+            return False
+        cursor.close()
+        con.commit()
+        con.close()
+        return True
+    
     def get_latest_id(self):
         """Fetch the 'id' of the latest incident record"""
         con = self.connect()
@@ -235,7 +254,7 @@ class Database():
         incidents = """CREATE TABLE IF NOT EXISTS incidents (
             id SERIAL PRIMARY KEY,
             createdOn VARCHAR(25) DEFAULT 'Date-time placeholder',
-            createdBy INTEGER DEFAULT '10',
+            createdBy VARCHAR DEFAULT 'Anon',
             type VARCHAR NOT NULL,
             location VARCHAR,
             status VARCHAR DEFAULT 'Under investigation',
