@@ -4,14 +4,17 @@ from app import create_app
 from ..api import v1
 
 app = create_app()
-database = v1.models.Database()
+udb = v1.users.users_models.UsersDatabase()
+idb = v1.incidents.incident_models.IncidentsDatabase()
 
 
 class TestUsers(unittest.TestCase):
 
     def setUp(self):
-        database.drop_tables()
-        database.create_tables()
+        udb.drop_tables()
+        idb.drop_tables()
+        udb.create_tables()
+        idb.create_tables()
         app.testing = True
         self.app = app.test_client()
         """User info for testing user-related resources"""
@@ -548,5 +551,6 @@ class TestUsers(unittest.TestCase):
         result = json.loads(response.data)
         self.assertEqual(response.status_code, 404)
     
-    database.drop_tables()
+    udb.drop_tables()
+    idb.drop_tables()
 
