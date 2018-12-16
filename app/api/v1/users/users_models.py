@@ -1,11 +1,6 @@
 import psycopg2
 import os
 from passlib.hash import sha256_crypt
-
-"""
-url = "dbname='ireporter' host='localhost'\
-            port='5432' user='postgres' password='Nanbada13'"
-"""
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 
